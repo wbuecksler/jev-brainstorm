@@ -1,0 +1,10 @@
+# Local secrets. Prototypes read TYPESAFE_API_KEY from the environment.
+.env
+.env.*
+!.env.example
+
+# Key material
+*.pem
+*.key
+credentials.json
+secrets.json
