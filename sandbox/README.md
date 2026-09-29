@@ -18,12 +18,12 @@ With no secret, the workflow runs a **dry run**: placeholder answers, clearly la
 ```bash
 pip install -e "sandbox[test]"
 jev-shadow lint specs/*/                       # anti-pattern checks, no network
-export TYPESAFE_API_KEY=...                    # or put it in a .env you never commit
+cp .env.example .env                           # then paste your key into .env (git-ignored); or export TYPESAFE_API_KEY
 jev-shadow run specs/support-triage-example    # writes out/<name>/report.md and shadow.jsonl
 pytest -q sandbox/tests                        # offline
 ```
 
-`--dry-run` forces placeholder answers even when a key is set. `--model` overrides the spec's model.
+`jev-shadow run` reads `TYPESAFE_*` values from the nearest `.env` (the current folder or a parent) when they aren't already set in the environment. It never prints them. `--dry-run` forces placeholder answers even when a key is set. `--model` overrides the spec's model.
 
 ## What the linter enforces
 

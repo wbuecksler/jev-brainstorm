@@ -15,6 +15,26 @@ from jev_shadow.run import render_report, run, write_log
 from jev_shadow.spec import LintResult, SpecError, lint_spec, load_fixtures, load_spec
 
 
+def load_dotenv(start: Path | None = None) -> None:
+    """Fill unset TYPESAFE_* variables from the nearest .env, so a key can live in a file instead of a chat.
+
+    Looks in the current directory and its parents. Never prints values. Existing environment wins.
+    """
+    here = (start or Path.cwd()).resolve()
+    for directory in (here, *here.parents):
+        candidate = directory / ".env"
+        if candidate.is_file():
+            for line in candidate.read_text(encoding="utf-8").splitlines():
+                key, sep, value = line.strip().partition("=")
+                key = key.removeprefix("export ").strip()
+                if not sep or key.startswith("#") or not key.startswith("TYPESAFE_"):
+                    continue
+                value = value.strip().strip('"').strip("'")
+                if value and not os.environ.get(key, "").strip():
+                    os.environ[key] = value
+            return
+
+
 def _load(spec_dir: Path):
     spec = load_spec(spec_dir / "spec.json")
     fixtures = load_fixtures(spec_dir / "fixtures.jsonl")
@@ -57,10 +77,14 @@ def cmd_run(args: argparse.Namespace) -> int:
     if not result.ok:
         return 1
 
+    load_dotenv()
     has_key = bool(os.environ.get("TYPESAFE_API_KEY", "").strip())
     if args.dry_run or not has_key:
         if not args.dry_run:
-            print("TYPESAFE_API_KEY is not set: running a DRY RUN with placeholder answers (no model called).", file=sys.stderr)
+            print(
+                "TYPESAFE_API_KEY is not set (environment or .env): running a DRY RUN with placeholder answers (no model called).",
+                file=sys.stderr,
+            )
         evaluator: Evaluator = DryRunEvaluator()
     else:
         evaluator = JevEvaluator(model=args.model or spec.get("model"))

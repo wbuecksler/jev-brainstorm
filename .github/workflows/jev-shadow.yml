@@ -9,9 +9,9 @@ name: Jev shadow run
 
 on:
   push:
-    paths: ["specs/**", "sandbox/**", "spec/**", ".github/workflows/jev-shadow.yml"]
+    paths: ["specs/**", "sandbox/**", "spec/**", "bot/**", "docs/**", "playbooks/**", "dist/**", "scripts/**", ".github/workflows/jev-shadow.yml"]
   pull_request:
-    paths: ["specs/**", "sandbox/**", "spec/**", ".github/workflows/jev-shadow.yml"]
+    paths: ["specs/**", "sandbox/**", "spec/**", "bot/**", "docs/**", "playbooks/**", "dist/**", "scripts/**", ".github/workflows/jev-shadow.yml"]
   workflow_dispatch:
     inputs:
       spec:

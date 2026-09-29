@@ -13,7 +13,7 @@ Jev (TypeSafe System One) returns Choice, Score, or Noul answers with probabilit
 2. `docs/anti-patterns.md`
 3. `docs/discovery-probes.md`
 4. `docs/jev-api-reference.md` (verified SDK surface; trust it over memory)
-5. `playbooks/discovery-interview.md`. The bot version is `bot/system-prompt.md`.
+5. `bot/system-prompt.md`: follow it as the coding-agent case. Do the technical steps yourself; the leader pastes their key into `.env`, never into chat. Never read `.env`.
 
 ## Flow
 
