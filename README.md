@@ -2,15 +2,23 @@
 
 **Jev is a decision API (Choice, Score, Noul), not a chatbot.**
 
-This repository is a public knowledge base and field toolkit for [TypeSafe Jev](https://docs.typesafe.ai/introduction.md), a System One decision model. Use it to find workflows where a typed decision — not generated prose — can route, score, verify, or gate work, then stand up a shadow-mode prototype.
+This repository is a public knowledge base and field toolkit for [TypeSafe Jev](https://docs.typesafe.ai/introduction.md), a System One decision model. It takes a business leader from "where would this help us?" to **watching Jev make their decision on their own examples**, in shadow mode, in a few minutes.
 
-It is not an official TypeSafe product, not an SDK, and not a place to store customer data or API keys.
+It is not an official TypeSafe product and not a place to store customer data or API keys.
 
-## How to use
+## The flow
 
-1. **Read the application map.** Start with [docs/application-map.md](docs/application-map.md). It catalogs where Jev fits, with qualitative fit scores and links to official sources. Read [anti-patterns](docs/anti-patterns.md) before you recommend anything.
-2. **Run a discovery interview with a leader.** Follow [playbooks/discovery-interview.md](playbooks/discovery-interview.md) and the [15 probes](docs/discovery-probes.md). One question at a time. The outcome is one to three ranked applications.
-3. **Fill the Claude Code template for a shadow-mode prototype.** Copy [playbooks/claude-code-prototype-template.md](playbooks/claude-code-prototype-template.md), fill it only from the interview, and paste it into Claude Code. [examples/README.md](examples/README.md) walks through that handoff, including a fictional filled fragment.
+```
+Discovery interview (bot or person, 5–7 questions, two tracks)
+  → Opportunity spec (JSON: questions, bands, business context)  ← linted against the anti-patterns
+  → Live shadow run on examples     (in chat, or GitHub Actions in their private sandbox repo)
+  → Opportunity Brief (leader)  +  Claude Code prompt (engineer: run it on labeled history)
+```
+
+1. **Interview.** Use the bot: [bot/system-prompt.md](bot/system-prompt.md). Or run it yourself with [playbooks/discovery-interview.md](playbooks/discovery-interview.md) and the [15 probes](docs/discovery-probes.md). The knowledge base behind it is the [application map](docs/application-map.md) and the [anti-patterns](docs/anti-patterns.md).
+2. **Spec.** The interview produces an [opportunity spec](spec/opportunity-spec.schema.json) plus synthetic fixtures. [specs/support-triage-example](specs/support-triage-example/) shows the shape.
+3. **Watch it run.** [sandbox/](sandbox/README.md) is a shadow-mode harness on the official Python SDK. Put `TYPESAFE_API_KEY` in a repository secret (never in chat), commit a spec, and *Actions → Jev shadow run* posts the Act / Review / Escalate report. Without a key, it runs a labeled dry run.
+4. **Hand off.** An [Opportunity Brief](playbooks/opportunity-brief-template.md) for the leader's approvers, and a [Claude Code prompt](playbooks/claude-code-prototype-template.md) that has an engineer run the same spec on the team's labeled history.
 
 Coding agents in this repo can follow [.cursor/skills/jev-discovery/SKILL.md](.cursor/skills/jev-discovery/SKILL.md).
 
@@ -28,7 +36,7 @@ state (text/JSON) + typed questions
 | Primitive | What it returns | Bound (vendor-stated) |
 |---|---|---|
 | **Choice** | One option from a closed set, with probabilities | ≤255 options |
-| **Score** | One level on an ordered rubric | 2–10 levels |
+| **Score** | An expected level on an ordered rubric, plus confidence | 2–10 levels |
 | **Noul** | An atomic yes/no with a calibrated probability | One fact per question |
 
 Jev does not generate text. Replies, summaries, code, and plans stay with a generative model or a person. Jev decides, classifies, scores, or verifies.
@@ -65,25 +73,34 @@ Prefer these over secondary posts:
 - [Introducing System One models and Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev)
 - [Model jaggedness (Jev 1.13)](https://docs.typesafe.ai/model-jaggedness/jev-1.13.md)
 
+The SDK surface this repo relies on (`typesafe-sdk` 0.7.2: `TypeSafeClient.system_one`, response fields, `POST /v1/systemone`) is written down in [docs/jev-api-reference.md](docs/jev-api-reference.md), verified from the SDK source.
+
 Partner access paths (OpenRouter, Vercel, Langfuse, Pulumi) and secondary write-ups are listed in the [application map](docs/application-map.md#6-canonical-links).
 
 ## Ground rules
 
 - **Shadow first.** The prototype logs a recommended band. It does not send, delete, charge, file, diagnose, or mutate production.
 - **Calibrate on your data.** Starting bands in a prompt are hypotheses. Do not carry a threshold from one primitive, cookbook, or customer to another.
-- **Never put secrets in this repo.** No API keys, customer records, transcripts, or `.env` files. A prototype reads `TYPESAFE_API_KEY` from the environment. `.gitignore` ignores `.env`.
+- **Never put secrets in this repo, or in a chat.** No API keys, customer records, transcripts, or `.env` files. The key lives in the environment or a GitHub Actions secret. Real examples belong in a **private** copy of this repo. `.gitignore` ignores `.env`, `out/`, and `history.jsonl`.
 - **Do not invent benchmarks.** If you cite price, speed, or accuracy, name the source and keep the number in that source’s scope.
 
 ## Layout
 
 | Path | Role |
 |---|---|
+| [bot/system-prompt.md](bot/system-prompt.md) | The Jev Discovery bot, plus an optional `jev_shadow_run` host tool |
 | [docs/application-map.md](docs/application-map.md) | Categories, app cards, qualitative fit matrix, attributed figures, sources |
 | [docs/anti-patterns.md](docs/anti-patterns.md) | Where not to use Jev |
-| [docs/discovery-probes.md](docs/discovery-probes.md) | Fifteen interview probes and what to listen for |
+| [docs/discovery-probes.md](docs/discovery-probes.md) | Fifteen interview probes, two tracks, and when to stop |
+| [docs/jev-api-reference.md](docs/jev-api-reference.md) | Verified SDK and HTTP surface |
 | [playbooks/discovery-interview.md](playbooks/discovery-interview.md) | How to run the interview and what to deliver |
-| [playbooks/claude-code-prototype-template.md](playbooks/claude-code-prototype-template.md) | Prompt skeleton for a shadow prototype |
-| [examples/README.md](examples/README.md) | How to fill the template and paste it into Claude Code |
+| [playbooks/opportunity-brief-template.md](playbooks/opportunity-brief-template.md) | One-page brief for the leader's approvers |
+| [playbooks/claude-code-prototype-template.md](playbooks/claude-code-prototype-template.md) | Engineer prompt: run the spec on labeled history |
+| [spec/opportunity-spec.schema.json](spec/opportunity-spec.schema.json) | JSON Schema for the interview's structured output |
+| [specs/](specs/) | One directory per spec (`spec.json` + `fixtures.jsonl`); the workflow runs each one |
+| [sandbox/](sandbox/README.md) | `jev-shadow`: lint, run, and report. Shadow only. Offline tests. |
+| [.github/workflows/jev-shadow.yml](.github/workflows/jev-shadow.yml) | Tests, lint, and a shadow run on every spec change; report in the run summary |
+| [examples/README.md](examples/README.md) | A worked handoff with a fictional company |
 | [.cursor/skills/jev-discovery/SKILL.md](.cursor/skills/jev-discovery/SKILL.md) | Short skill for coding agents |
 
 ## License

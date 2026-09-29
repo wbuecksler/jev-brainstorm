@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wbuecksler/jev-brainstorm/spec/opportunity-spec.schema.json",
+  "title": "Jev opportunity spec",
+  "description": "The structured output of a discovery interview. One spec renders the Opportunity Brief, the Claude Code prompt, and a runnable shadow harness (sandbox/). Shape checks live here; anti-pattern checks live in `jev-shadow lint`.",
+  "type": "object",
+  "required": ["spec_version", "name", "summary", "business", "fit", "questions", "bands"],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": { "const": "1" },
+    "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$", "description": "Directory-safe id, e.g. support-triage." },
+    "fictional": { "type": "boolean", "description": "True for examples. Real specs with customer detail belong in a private repo." },
+    "summary": { "type": "string", "description": "One sentence: the workflow outcome, in business language." },
+    "business": {
+      "type": "object",
+      "description": "Only what the leader said. Unknown fields are the string 'not stated'. Never estimate.",
+      "required": ["company", "workflow", "volume_as_stated", "consequence_if_wrong", "labeled_data", "policy_owner"],
+      "additionalProperties": false,
+      "properties": {
+        "company": { "type": "string" },
+        "leader_function": { "type": "string" },
+        "track": { "enum": ["operations", "ai_platform"] },
+        "workflow": { "type": "string" },
+        "inflow": { "type": "string" },
+        "volume_as_stated": { "type": "string" },
+        "current_tools": { "type": "string" },
+        "pain": { "type": "string" },
+        "value_as_stated": { "type": "string", "description": "Why this matters, in their words (hours, SLAs, risk). No invented dollars." },
+        "consequence_if_wrong": { "type": "string" },
+        "labeled_data": { "type": "string" },
+        "policy_owner": { "type": "string" },
+        "irreversible_actions": { "type": "string" }
+      }
+    },
+    "fit": {
+      "type": "object",
+      "required": ["V", "D", "R", "L", "value", "map_card", "pattern"],
+      "additionalProperties": false,
+      "properties": {
+        "V": { "$ref": "#/$defs/level", "description": "Volume" },
+        "D": { "$ref": "#/$defs/level", "description": "Decision-shaped: closed answer set" },
+        "R": { "$ref": "#/$defs/level", "description": "Reversible or safe with a human in the loop" },
+        "L": { "$ref": "#/$defs/level", "description": "Labeled data or outcomes to calibrate on" },
+        "value": { "$ref": "#/$defs/level", "description": "Pain or value to the business, qualitative" },
+        "map_card": { "type": "string", "description": "Closest card id in docs/application-map.md, e.g. E1" },
+        "pattern": { "type": "string" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "model": { "type": "string", "default": "jev-latest", "description": "Model name or alias; GET /v1/models lists what the account can use." },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string", "description": "What Jev sees and where it comes from. Smallest state that answers the questions." },
+        "required": { "type": "array", "items": { "type": "string" }, "description": "State fields that must be present; pair with a state_missing escalate rule." }
+      }
+    },
+    "questions": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Passed to Jev as-is: the wire format of POST /v1/systemone (typesafe-sdk 0.7.2).",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "criteria"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "const": "choice" },
+              "instructions": { "type": "string" },
+              "criteria": {
+                "type": "object",
+                "minProperties": 2,
+                "maxProperties": 255,
+                "additionalProperties": { "type": ["string", "null"] },
+                "description": "Label -> when it applies. Mutually exclusive. Include other / unclear / none."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "criteria"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "const": "score" },
+              "instructions": { "type": "string" },
+              "criteria": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 10,
+                "items": { "type": "string" },
+                "description": "Ordered levels, lowest first. Position is the score, starting at 0."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "instructions"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "const": "noul" },
+              "instructions": { "type": "string", "description": "One fact, stated as a question or a statement." },
+              "criteria": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": { "true": { "type": "string" }, "false": { "type": "string" } }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "high_stakes": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when a wrong Act would be irreversible or cause money, legal, or safety harm. Act then becomes Review."
+    },
+    "bands": {
+      "type": "object",
+      "required": ["escalate_if", "review_if"],
+      "additionalProperties": false,
+      "description": "Escalate if any escalate_if holds; else Review if any review_if holds; else Act. All values are starting hypotheses to calibrate.",
+      "properties": {
+        "escalate_if": { "type": "array", "items": { "$ref": "#/$defs/condition" } },
+        "review_if": { "type": "array", "items": { "$ref": "#/$defs/condition" } }
+      }
+    },
+    "out_of_scope": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "level": { "enum": ["H", "M", "L"] },
+    "condition": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "question": { "type": "string" },
+        "why": { "type": "string" },
+        "state_missing": { "type": "string" },
+        "choice_in": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "choice_not_in": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "confidence_lt": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confidence_gte": { "type": "number", "minimum": 0, "maximum": 1 },
+        "score_gte": { "type": "number", "minimum": 0 },
+        "score_lte": { "type": "number", "minimum": 0 },
+        "noul_gte": { "type": "number", "minimum": 0, "maximum": 1 },
+        "noul_lt": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
