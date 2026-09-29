@@ -2,9 +2,50 @@
 
 **Jev is a decision API (Choice, Score, Noul), not a chatbot.**
 
-This repository is a public knowledge base and field toolkit for [TypeSafe Jev](https://docs.typesafe.ai/introduction.md), a System One decision model. It takes a business leader from "where would this help us?" to **watching Jev make their decision on their own examples**, in shadow mode, in a few minutes.
+Find where a fast, cheap decision model fits your business, then watch it make that decision on your own examples. It all happens in the AI tool you already use. You don't need to know GitHub.
 
-It is not an official TypeSafe product and not a place to store customer data or API keys.
+## Start here
+
+Pick the AI tool you use. You'll be interviewed one question at a time, in that same window, for about five minutes. At the end you get a recommendation, a one-page brief you can forward, and a prompt your engineer can pick up.
+
+### Claude Code or Cursor (can also run Jev live for you)
+
+1. **Claude Code:** open it in any folder. In the desktop app, choose a folder; in a terminal, type `claude`.
+   **Cursor:** *File → Open Folder*, pick any empty folder, then open the chat (Cmd/Ctrl + L) in **Agent** mode.
+2. Paste this and press Enter:
+
+```text
+Set up Jev Discovery for me: clone https://github.com/wbuecksler/jev-brainstorm into a folder called jev-brainstorm (or pull the latest if it's already there), then read jev-brainstorm/bot/system-prompt.md and become Jev Discovery exactly as it describes. Do every technical step yourself and interview me one question at a time.
+```
+
+That's it. The AI handles the setup. When it's time to see Jev run, it asks you to paste your TypeSafe API key into a file it creates (`.env`), **not into the chat**. It then runs your examples and shows you the results in the same window.
+
+If you already have this folder open, just type **`/discover`** in Claude Code, or **"start discovery"** in Cursor.
+
+### ChatGPT, Grok, Claude.ai, or Gemini (interview and plan; no live run)
+
+Paste this into a new chat:
+
+```text
+Open https://raw.githubusercontent.com/wbuecksler/jev-brainstorm/main/dist/jev-discovery-chat.md, follow the instructions inside it, and start.
+```
+
+If it says it can't open links, [download the file](https://github.com/wbuecksler/jev-brainstorm/raw/main/dist/jev-discovery-chat.md), attach it to a new chat, and send **"Start."**
+
+Chat apps can't call Jev themselves. At the end, the AI gives you everything you need, plus a one-line way to see it run in Claude Code or Cursor.
+
+### What each option gets you
+
+| | Interview + recommendation | Brief + engineer prompt | Watch Jev run on your examples |
+|---|---|---|---|
+| Claude Code / Cursor | ✓ | ✓ | ✓ (with your API key in `.env`) |
+| ChatGPT / Grok / Claude.ai / Gemini | ✓ | ✓ | Hand off to Claude Code or Cursor |
+
+**Safe by design:** nothing is sent, changed, or approved in your systems. Jev's answers are logged as recommendations only. Don't paste API keys or customer personal data into any chat.
+
+---
+
+The rest of this page is for people maintaining or extending the toolkit. It's a public knowledge base and field toolkit for [TypeSafe Jev](https://docs.typesafe.ai/introduction.md), a System One decision model. It is not an official TypeSafe product and not a place to store customer data or API keys.
 
 ## The flow
 
@@ -15,9 +56,9 @@ Discovery interview (bot or person, 5–7 questions, two tracks)
   → Opportunity Brief (leader)  +  Claude Code prompt (engineer: run it on labeled history)
 ```
 
-1. **Interview.** Use the bot: [bot/system-prompt.md](bot/system-prompt.md). Or run it yourself with [playbooks/discovery-interview.md](playbooks/discovery-interview.md) and the [15 probes](docs/discovery-probes.md). The knowledge base behind it is the [application map](docs/application-map.md) and the [anti-patterns](docs/anti-patterns.md).
+1. **Interview.** Use the bot: [bot/system-prompt.md](bot/system-prompt.md), loaded by [CLAUDE.md](CLAUDE.md) / [AGENTS.md](AGENTS.md) / `/discover` in coding agents, and bundled for chat apps in [dist/jev-discovery-chat.md](dist/jev-discovery-chat.md). Or run it yourself with [playbooks/discovery-interview.md](playbooks/discovery-interview.md) and the [15 probes](docs/discovery-probes.md). The knowledge base behind it is the [application map](docs/application-map.md) and the [anti-patterns](docs/anti-patterns.md).
 2. **Spec.** The interview produces an [opportunity spec](spec/opportunity-spec.schema.json) plus synthetic fixtures. [specs/support-triage-example](specs/support-triage-example/) shows the shape.
-3. **Watch it run.** [sandbox/](sandbox/README.md) is a shadow-mode harness on the official Python SDK. Put `TYPESAFE_API_KEY` in a repository secret (never in chat), commit a spec, and *Actions → Jev shadow run* posts the Act / Review / Escalate report. Without a key, it runs a labeled dry run.
+3. **Watch it run.** [sandbox/](sandbox/README.md) is a shadow-mode harness on the official Python SDK. In Claude Code or Cursor, the agent installs and runs it for you, and the key goes in `.env`. For a team setup, put `TYPESAFE_API_KEY` in a repository secret, commit a spec, and *Actions → Jev shadow run* posts the Act / Review / Escalate report. Without a key, it runs a labeled dry run.
 4. **Hand off.** An [Opportunity Brief](playbooks/opportunity-brief-template.md) for the leader's approvers, and a [Claude Code prompt](playbooks/claude-code-prototype-template.md) that has an engineer run the same spec on the team's labeled history.
 
 Coding agents in this repo can follow [.cursor/skills/jev-discovery/SKILL.md](.cursor/skills/jev-discovery/SKILL.md).
@@ -88,7 +129,10 @@ Partner access paths (OpenRouter, Vercel, Langfuse, Pulumi) and secondary write-
 
 | Path | Role |
 |---|---|
-| [bot/system-prompt.md](bot/system-prompt.md) | The Jev Discovery bot, plus an optional `jev_shadow_run` host tool |
+| [bot/system-prompt.md](bot/system-prompt.md) | The Jev Discovery bot (adapts to coding agents, chat apps, or a custom host with the `jev_shadow_run` tool) |
+| [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md), [.claude/commands/discover.md](.claude/commands/discover.md) | Make Claude Code / Cursor / other agents start the interview when the folder is opened |
+| [dist/jev-discovery-chat.md](dist/jev-discovery-chat.md) | One-file bundle for chat apps. Generated by [scripts/build_chat_bundle.py](scripts/build_chat_bundle.py); a test fails if it's stale |
+| [.env.example](.env.example) | Where a person pastes their key; the harness reads `.env` |
 | [docs/application-map.md](docs/application-map.md) | Categories, app cards, qualitative fit matrix, attributed figures, sources |
 | [docs/anti-patterns.md](docs/anti-patterns.md) | Where not to use Jev |
 | [docs/discovery-probes.md](docs/discovery-probes.md) | Fifteen interview probes, two tracks, and when to stop |

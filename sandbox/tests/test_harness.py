@@ -144,6 +144,7 @@ def test_live_path_uses_real_sdk_wire_format(monkeypatch):
 
 def test_cli_run_without_key_falls_back_to_dry_run(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    monkeypatch.chdir(tmp_path)  # keep a developer's real .env out of this test
     assert main(["run", str(EXAMPLE), "--out", str(tmp_path)]) == 0
     log = (tmp_path / "support-triage-example" / "shadow.jsonl").read_text().splitlines()
     assert len(log) == 8
@@ -167,3 +168,33 @@ def test_host_entry_point_lints_caps_and_reports():
     bad["questions"]["reply"] = {"type": "noul", "instructions": "Draft a reply"}
     with pytest.raises(SpecError, match="generated text"):
         shadow_run(bad, raw, evaluator=DryRunEvaluator())
+
+
+def test_dotenv_fills_only_unset_typesafe_keys(tmp_path, monkeypatch):
+    from jev_shadow.cli import load_dotenv
+
+    (tmp_path / ".env").write_text('# comment\nTYPESAFE_API_KEY="from-file"\nOTHER_SECRET=nope\nTYPESAFE_DEFAULT_MODEL=\n')
+    nested = tmp_path / "specs" / "x"
+    nested.mkdir(parents=True)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "")  # empty counts as unset; monkeypatch restores the original afterwards
+    monkeypatch.delenv("OTHER_SECRET", raising=False)
+    load_dotenv(nested)
+    import os
+
+    assert os.environ["TYPESAFE_API_KEY"] == "from-file"
+    assert "OTHER_SECRET" not in os.environ
+
+    monkeypatch.setenv("TYPESAFE_API_KEY", "from-env")
+    load_dotenv(nested)
+    assert os.environ["TYPESAFE_API_KEY"] == "from-env"
+
+
+def test_chat_bundle_is_current():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("build_chat_bundle", REPO / "scripts" / "build_chat_bundle.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    committed = (REPO / "dist" / "jev-discovery-chat.md").read_text(encoding="utf-8")
+    assert committed == module.build(), "dist/jev-discovery-chat.md is stale: run python3 scripts/build_chat_bundle.py"
+    assert "Optional host tool" not in committed  # chat apps have no tools
