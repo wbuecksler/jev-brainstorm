@@ -1,0 +1,25 @@
+[project]
+name = "jev-shadow"
+version = "0.1.0"
+description = "Shadow-mode harness: run an opportunity spec's Choice/Score/Noul questions against fixtures and report bands. Never acts."
+requires-python = ">=3.10"
+dependencies = [
+  # Verified against typesafe-sdk 0.7.2 source (TypeSafeClient.system_one). Pin the minor; re-verify on upgrade.
+  "typesafe-sdk>=0.7.2,<0.8",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "jsonschema>=4"]
+
+[project.scripts]
+jev-shadow = "jev_shadow.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["jev_shadow"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

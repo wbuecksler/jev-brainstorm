@@ -4,6 +4,8 @@ Knowledge base for discovery and prototyping. Jev is a **decision API** (Choice,
 
 **Audience:** anyone running a discovery interview, plus coding agents that recommend a shadow-mode prototype.  
 **Grounding rule:** claims below come from TypeSafe docs, cookbooks, the product introduction, or named partner and builder posts. This file does not add benchmarks. Fit scores are qualitative (H/M/L) on four axes, not fabricated KPIs.  
+**Last reviewed:** 2026-09-29. Vendor facts drift; re-check against docs.typesafe.ai before quoting.  
+**Verified API surface:** [jev-api-reference.md](jev-api-reference.md) (from the `typesafe-sdk` 0.7.2 source).  
 **Model facts (vendor-stated):** System One decision model; Choice / Score / Noul; no text generation; ~$0.042/MTok input, output free; ~70–500 ms; RLCD-calibrated probabilities; Choice ≤255 options; Score 2–10 levels; ~32k state window (OpenRouter/Vercel listings).  
 **Patterns to listen for:** tool pruning · decision/gen split · shadow routers · mass retag · irreversible gates. Definitions are in the [pattern cheat-sheet](#pattern-cheat-sheet).
 
@@ -200,6 +202,10 @@ Each category lists 3–8 concrete apps grounded in docs, cookbooks, or publishe
 
 ## 2. Per-app detail cards
 Format: **Today → Jev insertion → Questions → HITL → Outcome**. Fit in §3.
+
+**Apps listed in §1 without a card below** (C4–C6, D3–D6, E5–E6, F2, F5–F6, G3–G5, H4, H6, I2–I3, I5, J4–J5, K4–K5, L3–L5, M2–M5, N1–N3, N5, O2–O4, P2–P4) are **list only**. When you recommend one, build its card live from the closest carded sibling, say that you did, and do not attach figures to it.
+
+When you recommend any app, also state **what Jev reads and where it lives** (the state source) — the engineer's first question.
 
 ### A1. Model routing
 - **Today:** One default frontier model, or manual `/model`, or LLM-as-router (adds latency/cost).  
@@ -477,15 +483,15 @@ Scale: **H / M / L**. Overall ★ is a rough discovery priority (more H ranks hi
 |---|---|---|---|---|---|
 | A1 Model routing | H | H | H | M | ★★★★★ |
 | A3 Irreversible gates | H | H | M* | M | ★★★★★ |
-| A6 Tool pruning | H | H | H | L | ★★★★☆ |
+| A6 Tool pruning | H | H | H | L† | ★★★★☆ |
 | A2 Skill/tool select | H | H | H | M | ★★★★☆ |
 | B1 I/O guardrails | H | H | M | M | ★★★★★ |
 | B2 Injection screen | H | H | H | M | ★★★★☆ |
 | B3 Citation check | M | H | H | M | ★★★★☆ |
 | B4 Extract verify | H | H | H | M | ★★★★★ |
-| B7 Eval-as-judge | H | H | H | H | ★★★★★ |
+| B7 Eval-as-judge | H | H | H | M‡ | ★★★★☆ |
 | C1–2 RAG filter/rerank | H | H | H | M | ★★★★★ |
-| D1 Mass retag | H | H | H | H | ★★★★★ |
+| D1 Mass retag | H | H | H | M‡ | ★★★★★ |
 | D2 Feature→ML | H | H | H | H | ★★★★☆ |
 | E1 Support triage | H | H | H | H | ★★★★★ |
 | E4 Reply verify | H | H | M | M | ★★★★☆ |
@@ -506,6 +512,8 @@ Scale: **H / M / L**. Overall ★ is a rough discovery priority (more H ranks hi
 | P Demand features | M | H | H | H | ★★★☆☆ |
 
 \*R=M because mistakes are dangerous — still a strong fit when HITL gates are strict.  
+†L=L but still ★★★★☆: pruning quality can be checked indirectly (task success with and without the pruned context) without a hand-labeled set.  
+‡L=M, not H: a new taxonomy (D1) or a new eval rubric (B7) usually has **no** labels yet — that is why you are retagging or judging. Budget a stratified hand-labeled sample; that sample becomes the calibration set.  
 \*\*R=L means do not fully automate consequential actions; use Jev to prioritize or confirm only.
 
 ### Figures cited in the cards

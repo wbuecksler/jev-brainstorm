@@ -8,3 +8,14 @@
 *.key
 credentials.json
 secrets.json
+
+# Shadow-run output and real history exports. Never commit customer data.
+out/
+history.jsonl
+**/history.jsonl
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/

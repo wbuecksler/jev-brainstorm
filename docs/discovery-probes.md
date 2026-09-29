@@ -6,6 +6,10 @@ Each probe maps to the fit axes in the [application map](application-map.md): **
 
 Record what they actually said. Do not convert a vague answer into a metric.
 
+**Tracks.** Most leaders are on the **operations** track: lead with probes 1–4, 6, 9, 10, and 13–15. Add probes 5, 7, 8, 11, and 12 (the **AI-platform** track) only when they say they run LLMs or agents in production. Those probes assume vocabulary a COO won't have.
+
+**Value.** Alongside V/D/R/L, listen for **why the workflow matters**, in their words: hours lost, SLA misses, risk exposure, a complaint that keeps coming back. Recommendations rank by Value first among workflows that pass the fit tests. Record it as they said it. Never convert it to dollars.
+
 Probe 13’s “50–200× cheaper” is a **hypothetical prompt** to surface backlog, not a claim that Jev is that multiple for their stack.
 
 ## 1. Fixed menus at volume
@@ -140,5 +144,7 @@ Before ranking applications, you want a picture of:
 - Current tools (rules, generative model, humans)
 - Irreversible actions, if any
 - Who owns the rubric
+- Why it matters (Value), in their words
+- Where the input text lives, so an engineer can export it
 
-Eight to twelve substantive answers is the usual bar. Fewer is fine when they explicitly skip ahead — then mark the missing axes instead of filling them in.
+**Stop when one candidate has V, D, R, L, and Value, plus a known state source and policy owner.** That's usually 5–7 answers, because one good answer often covers several axes. Fewer is fine when they explicitly skip ahead: mark the missing axes instead of filling them in.

@@ -1,0 +1,67 @@
+# Runs every spec in specs/ through the shadow harness and posts the report to the run summary.
+#
+# To see live Jev answers: Settings → Secrets and variables → Actions → New repository secret,
+# name TYPESAFE_API_KEY. Without it (or on pull requests from forks, which never receive secrets)
+# the harness runs a clearly labeled DRY RUN. The key is never printed, logged, or committed.
+#
+# Shadow only: the harness calls the Jev API and writes files. It sends, changes, and acts on nothing.
+name: Jev shadow run
+
+on:
+  push:
+    paths: ["specs/**", "sandbox/**", "spec/**", ".github/workflows/jev-shadow.yml"]
+  pull_request:
+    paths: ["specs/**", "sandbox/**", "spec/**", ".github/workflows/jev-shadow.yml"]
+  workflow_dispatch:
+    inputs:
+      spec:
+        description: "Spec directory under specs/ to run (blank = all)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install harness
+        run: pip install -e "sandbox[test]"
+
+      - name: Tests (offline)
+        run: pytest -q sandbox/tests
+
+      - name: Lint specs against the anti-patterns
+        run: jev-shadow lint specs/*/
+
+      - name: Shadow run
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          ONLY: ${{ inputs.spec }}
+        run: |
+          if [ -n "$TYPESAFE_API_KEY" ]; then echo "Key present: live Jev calls."; else echo "No key: dry run."; fi
+          status=0
+          for dir in specs/*/; do
+            name=$(basename "$dir")
+            if [ -n "$ONLY" ] && [ "$ONLY" != "$name" ]; then continue; fi
+            jev-shadow run "$dir" --out out || status=1
+            cat "out/$name/report.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          done
+          exit $status
+
+      - name: Upload shadow logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jev-shadow-out
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 14
